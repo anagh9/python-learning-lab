@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  otp-service:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      # ── Required secrets ──────────────────────────────────────────────────
+      - OTP_SECRET_KEY=${OTP_SECRET_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+
+      # ── OTP config ────────────────────────────────────────────────────────
+      - OTP_DIGITS=${OTP_DIGITS:-6}
+      - OTP_WINDOW_SECONDS=${OTP_WINDOW_SECONDS:-300}
+      - OTP_DRIFT_TOLERANCE=${OTP_DRIFT_TOLERANCE:-1}
+
+      # ── Token config ──────────────────────────────────────────────────────
+      - ACCESS_TOKEN_TTL=${ACCESS_TOKEN_TTL:-900}
+      - TOKEN_ISSUER=${TOKEN_ISSUER:-stateless-otp}
+      - TOKEN_AUDIENCE=${TOKEN_AUDIENCE:-api}
+
+      # ── Rate limiting ─────────────────────────────────────────────────────
+      - RATE_REQUEST_OTP_MAX=${RATE_REQUEST_OTP_MAX:-5}
+      - RATE_REQUEST_OTP_WINDOW=${RATE_REQUEST_OTP_WINDOW:-600}
+      - RATE_VERIFY_OTP_MAX=${RATE_VERIFY_OTP_MAX:-10}
+      - RATE_VERIFY_OTP_WINDOW=${RATE_VERIFY_OTP_WINDOW:-600}
+
+      # ── Delivery ──────────────────────────────────────────────────────────
+      - DELIVERY_BACKEND=${DELIVERY_BACKEND:-console}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USERNAME=${SMTP_USERNAME:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID:-}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN:-}
+      - TWILIO_FROM_NUMBER=${TWILIO_FROM_NUMBER:-}
+
+      # ── Server ────────────────────────────────────────────────────────────
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
