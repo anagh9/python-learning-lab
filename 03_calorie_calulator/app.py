@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from datetime import date, datetime
 import os
 import database
+from pytz import timezone
 
 load_dotenv()
 
@@ -13,9 +14,6 @@ database.init_db()
 
 USERNAME = os.getenv("IDENTITY")
 PASSWORD = os.getenv("PASSWORD")
-
-print(f"Loaded USERNAME: {USERNAME}")
-print(f"Loaded PASSWORD: {PASSWORD}")
 
 
 def login_required(f):
@@ -32,11 +30,13 @@ def login_required(f):
 @app.route("/", methods=["GET"])
 @login_required
 def index():
-    selected_date = request.args.get("date", date.today().isoformat())
+    india = timezone("Asia/Kolkata")
+    selected_date = request.args.get(
+        "date", datetime.now(india).date().isoformat())
     entries = database.get_entries_by_date(selected_date)
     total = database.get_total_calories(selected_date)
     all_dates = database.get_all_dates()
-    today = date.today().isoformat()
+    today = datetime.now(india).date().isoformat()
 
     # Ensure today is always in the date list for the sidebar
     if today not in all_dates:
@@ -86,11 +86,6 @@ def delete(entry_id):
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        print(f"Received username: {request.form.get('username')}")
-        print(f"Received password: {request.form.get('password')}")
-        print(request.form.get("username") == USERNAME)
-        print(request.form.get("password") == PASSWORD)
-
         if (request.form.get("username") == USERNAME and
                 request.form.get("password") == PASSWORD):
             session["logged_in"] = True
