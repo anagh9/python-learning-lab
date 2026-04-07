@@ -18,6 +18,14 @@ This module demonstrates the implementation of a stateless OTP (One-Time Passwor
 
 For more details, check the [02_stateless_otp README](02_stateless_otp/README.md).
 
+### [03_calorie_calulator](03_calorie_calulator/README.md)
+This module focuses on building a calorie calculator application. It includes features for:
+- Tracking calorie intake
+- Managing food items and their nutritional values
+- Calculating daily calorie consumption
+
+For more details, check the [03_calorie_calulator README](03_calorie_calulator/README.md).
+
 ## How to Use
 1. Navigate to the desired module.
 2. Follow the instructions in the module's README file.
