@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center px-4">
+  <div class="w-full max-w-sm">
+
+    <!-- Logo -->
+    <div class="mb-10 text-center">
+      <span class="mono text-2xl font-medium tracking-tight text-stone-900">cal<span class="text-orange-500">track</span></span>
+      <p class="text-sm text-stone-400 mt-1">daily calorie journal</p>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Form -->
+    <form method="POST" class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-stone-500 mb-1 uppercase tracking-widest">Username</label>
+        <input type="text" name="username" required
+          class="w-full border border-stone-200 rounded-lg px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition"
+          placeholder="admin">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-stone-500 mb-1 uppercase tracking-widest">Password</label>
+        <input type="password" name="password" required
+          class="w-full border border-stone-200 rounded-lg px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition"
+          placeholder="••••••••">
+      </div>
+      <button type="submit"
+        class="w-full bg-stone-900 text-white text-sm font-medium py-2.5 rounded-lg hover:bg-stone-700 transition mt-2">
+        Sign in →
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Top nav -->
+<nav class="border-b border-stone-200 bg-white px-6 py-4 flex items-center justify-between">
+  <span class="mono text-lg font-medium text-stone-900">cal<span class="text-orange-500">track</span></span>
+  <a href="/logout" class="text-xs text-stone-400 hover:text-stone-600 transition">logout</a>
+</nav>
+
+<div class="flex min-h-[calc(100vh-57px)]">
+
+  <!-- Sidebar: past dates -->
+  <aside class="w-52 shrink-0 border-r border-stone-200 bg-white p-4 hidden md:block">
+    <p class="text-xs uppercase tracking-widest text-stone-400 font-medium mb-3">History</p>
+    <ul class="space-y-1">
+      {% for d in all_dates %}
+      <li>
+        <a href="/?date={{ d }}"
+          class="block text-sm px-3 py-2 rounded-lg transition
+            {% if d == selected_date %}bg-orange-50 text-orange-600 font-medium{% else %}text-stone-500 hover:bg-stone-100{% endif %}">
+          {% if d == today %}
+            <span class="mono">today</span>
+          {% else %}
+            <span class="mono">{{ d }}</span>
+          {% endif %}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </aside>
+
+  <!-- Main content -->
+  <main class="flex-1 p-6 max-w-2xl">
+
+    <!-- Date header -->
+    <div class="mb-6">
+      <h1 class="text-xl font-semibold text-stone-900">
+        {% if selected_date == today %}Today{% else %}{{ selected_date }}{% endif %}
+      </h1>
+      <p class="mono text-sm text-stone-400 mt-0.5">{{ selected_date }}</p>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+        <div class="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Calorie summary card -->
+    <div class="bg-white border border-stone-200 rounded-xl p-5 mb-6 flex items-center justify-between">
+      <div>
+        <p class="text-xs text-stone-400 uppercase tracking-widest font-medium mb-1">Total Calories</p>
+        <p class="mono text-3xl font-medium text-stone-900">{{ total }} <span class="text-sm text-stone-400">kcal</span></p>
+      </div>
+      <div class="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center">
+        <span class="text-2xl">🔥</span>
+      </div>
+    </div>
+
+    <!-- Add entry form -->
+    {% if selected_date == today %}
+    <div class="bg-white border border-stone-200 rounded-xl p-5 mb-6">
+      <p class="text-xs text-stone-400 uppercase tracking-widest font-medium mb-4">Add Entry</p>
+      <form method="POST" action="/add" class="flex gap-3 flex-wrap">
+        <input type="hidden" name="entry_date" value="{{ selected_date }}">
+        <input type="text" name="food_item" placeholder="Food item…" required
+          class="flex-1 min-w-[160px] border border-stone-200 rounded-lg px-3 py-2 text-sm bg-stone-50 focus:outline-none focus:ring-2 focus:ring-orange-400 transition">
+        <input type="number" name="calories" placeholder="kcal" required min="1"
+          class="w-24 border border-stone-200 rounded-lg px-3 py-2 text-sm bg-stone-50 focus:outline-none focus:ring-2 focus:ring-orange-400 transition mono">
+        <button type="submit"
+          class="bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium px-5 py-2 rounded-lg transition">
+          + Add
+        </button>
+      </form>
+    </div>
+    {% endif %}
+
+    <!-- Entries list -->
+    <div class="space-y-2">
+      {% if entries %}
+        {% for entry in entries %}
+        <div class="bg-white border border-stone-200 rounded-xl px-5 py-4 flex items-center justify-between group">
+          <div>
+            <p class="text-sm font-medium text-stone-800">{{ entry["food_item"] }}</p>
+            <p class="mono text-xs text-stone-400 mt-0.5">{{ entry["created_at"][:16] }}</p>
+          </div>
+          <div class="flex items-center gap-4">
+            <span class="mono text-sm font-medium text-orange-500">{{ entry["calories"] }} kcal</span>
+            {% if selected_date == today %}
+            <form method="POST" action="/delete/{{ entry['id'] }}">
+              <input type="hidden" name="entry_date" value="{{ selected_date }}">
+              <button type="submit"
+                class="text-stone-300 hover:text-red-400 transition text-xs opacity-0 group-hover:opacity-100">
+                ✕
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center py-16 text-stone-300">
+          <p class="text-4xl mb-3">🍽️</p>
+          <p class="text-sm">No entries yet for this day.</p>
+        </div>
+      {% endif %}
+    </div>
+
+  </main>
+</div>
+
+{% endblock %}
