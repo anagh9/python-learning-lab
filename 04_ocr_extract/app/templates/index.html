@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OCR Extractor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Segoe UI", "Tahoma", "Geneva", "Verdana", "sans-serif"],
+              mono: ["Consolas", "Monaco", "monospace"],
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <main class="mx-auto flex min-h-screen max-w-6xl flex-col px-6 py-10">
+      <section class="mb-10 rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl shadow-cyan-950/30 backdrop-blur">
+        <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div class="max-w-2xl">
+            <p class="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
+              Multi Image OCR
+            </p>
+            <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">
+              Extract text from multiple images in one pass
+            </h1>
+            <p class="mt-4 text-base leading-7 text-slate-300">
+              Upload one or more images, run OCR, and copy the cleaned text output for each image from a clearly separated result panel.
+            </p>
+          </div>
+        </div>
+
+        {% if error_message %}
+          <div class="mb-6 rounded-2xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+            {{ error_message }}
+          </div>
+        {% endif %}
+
+        <form
+          action="{{ url_for('main.extract') }}"
+          method="post"
+          enctype="multipart/form-data"
+          class="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]"
+        >
+          <label class="group flex cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-cyan-400/50 bg-slate-900/70 px-6 py-16 text-center transition hover:border-cyan-300 hover:bg-slate-900">
+            <span class="text-lg font-semibold text-white">Choose image files</span>
+            <span class="mt-2 text-sm text-slate-400">
+              Supports PNG, JPG, JPEG, BMP, TIFF, GIF, and WEBP.
+            </span>
+            <input
+              type="file"
+              name="images"
+              accept="image/*"
+              multiple
+              class="mt-6 block w-full text-sm text-slate-300 file:mr-4 file:rounded-full file:border-0 file:bg-cyan-400 file:px-4 file:py-2 file:font-semibold file:text-slate-950 hover:file:bg-cyan-300"
+            />
+          </label>
+
+          <div class="flex flex-col justify-between rounded-3xl border border-white/10 bg-slate-900/80 p-6">
+            <div>
+              <h2 class="text-xl font-bold text-white">How it works</h2>
+              <ol class="mt-4 space-y-3 text-sm leading-6 text-slate-300">
+                <li>1. Select one or more image files from your device.</li>
+                <li>2. Submit the form to run OCR through Tesseract.</li>
+                <li>3. Copy the extracted text from each result card below.</li>
+              </ol>
+            </div>
+            <button
+              type="submit"
+              class="mt-8 inline-flex items-center justify-center rounded-full bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-300"
+            >
+              Extract Text
+            </button>
+          </div>
+        </form>
+      </section>
+
+      {% if extraction_results %}
+        <section class="space-y-6">
+          <div class="flex flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/30 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 class="text-2xl font-bold text-white">Extracted Results</h2>
+              <p class="text-sm text-slate-400">
+                {{ extraction_results|length }} image{{ '' if extraction_results|length == 1 else 's' }} processed
+              </p>
+            </div>
+            <div class="flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                class="rounded-full border border-cyan-300/40 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-200 hover:text-white"
+                onclick="copyText('combined-results', this)"
+              >
+                Copy All Text
+              </button>
+              <button
+                type="button"
+                class="rounded-full bg-cyan-400 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-cyan-300"
+                onclick="downloadTextFile('ocr-extract-results.txt', 'combined-results')"
+              >
+                Download TXT
+              </button>
+            </div>
+          </div>
+
+          <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/30">
+            <div class="mb-4">
+              <p class="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-300">Combined Output</p>
+              <h3 class="text-lg font-bold text-white">All extracted text in one file-ready block</h3>
+            </div>
+            <textarea
+              id="combined-results"
+              readonly
+              class="min-h-[18rem] w-full rounded-2xl border border-white/10 bg-slate-950/70 p-4 font-mono text-sm leading-6 text-slate-100 outline-none"
+            >{{ combined_extraction_text }}</textarea>
+          </article>
+
+          {% for result in extraction_results %}
+            <article class="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-lg shadow-slate-950/30">
+              <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.25em] text-cyan-300">Image {{ loop.index }}</p>
+                  <h3 class="text-lg font-bold text-white">{{ result.filename }}</h3>
+                </div>
+                <button
+                  type="button"
+                  class="rounded-full border border-cyan-300/40 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-200 hover:text-white"
+                  onclick="copyText('result-{{ loop.index }}', this)"
+                >
+                  Copy Text
+                </button>
+              </div>
+              <textarea
+                id="result-{{ loop.index }}"
+                readonly
+                class="min-h-[16rem] w-full rounded-2xl border border-white/10 bg-slate-950/70 p-4 font-mono text-sm leading-6 text-slate-100 outline-none"
+              >{{ result.extracted_text }}</textarea>
+            </article>
+          {% endfor %}
+        </section>
+      {% endif %}
+    </main>
+
+    <script>
+      function fallbackCopyText(target) {
+        target.focus();
+        target.select();
+        target.setSelectionRange(0, target.value.length);
+        return document.execCommand("copy");
+      }
+
+      async function copyText(elementId, button) {
+        const target = document.getElementById(elementId);
+        const originalLabel = button.textContent;
+
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(target.value);
+          } else {
+            const copied = fallbackCopyText(target);
+            if (!copied) {
+              throw new Error("Fallback copy failed.");
+            }
+          }
+
+          button.textContent = "Copied";
+        } catch (error) {
+          const copied = fallbackCopyText(target);
+          button.textContent = copied ? "Copied" : "Select Text";
+        }
+
+        setTimeout(() => {
+          button.textContent = originalLabel;
+        }, 1500);
+      }
+
+      function downloadTextFile(filename, elementId) {
+        const target = document.getElementById(elementId);
+        const blob = new Blob([target.value], { type: "text/plain;charset=utf-8" });
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(downloadUrl);
+      }
+    </script>
+  </body>
+</html>
