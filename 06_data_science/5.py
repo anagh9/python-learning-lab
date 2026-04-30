@@ -35,6 +35,7 @@ print("Initial Data Created\n")
 # =====================================================
 customers.to_csv("customers.csv", index=False)
 orders.to_csv("orders.csv", index=False)
+payments.to_csv("payments.csv", index=False)
 payments.to_parquet("payments.parquet", index=False)
 
 print("Files Saved\n")
@@ -95,7 +96,7 @@ conditions = [
 
 choices = ["Low", "Medium", "High"]
 
-df["order_category"] = np.select(conditions, choices)
+df["order_category"] = np.select(conditions, choices, default="Unknown")
 
 print("Feature Engineering Done\n")
 
